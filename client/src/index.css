@@ -33,3 +33,12 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #6b6b6b; /* Color of the scrollbar handle on hover */
 }
+
+.ant-pagination-custom .ant-pagination-item {
+  @apply items-center justify-center w-8 h-8 border border-blue-500;
+}
+
+.ant-pagination-custom .ant-pagination-item a {
+  @apply text-blue-500;
+}
+

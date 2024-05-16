@@ -1,20 +1,33 @@
+import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { selectIsAuthenticated } from "../store/slices/authSlice";
 import { useSendLogoutMutation } from "../store/slices/api/authApiSlice";
+import { useGetTodosQuery } from "../store/slices/api/todoApiSlice";
+import Loader from "./Loader";
 
 const Header = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const [logout] = useSendLogoutMutation();
+  const { refetch: refetchTodos, isLoading } = useGetTodosQuery();
+
+  useEffect(() => {
+    if (isAuthenticated !== undefined) {
+      refetchTodos();
+    }
+  }, [isAuthenticated, refetchTodos]);
 
   const handleLogout = async () => {
     try {
       await logout();
-      window.location.reload();
     } catch (error) {
       console.log(error);
     }
   };
+
+  if(isLoading){
+    return <Loader/>
+  }
 
   return (
     <div className="h-16 bg-white shadow-md flex items-center p-5">

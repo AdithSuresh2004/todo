@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated } from "../store/slices/authSlice";
 
-const Login = () => {
+const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [login] = useLoginMutation();
@@ -37,7 +37,6 @@ const Login = () => {
           toast.error(response.error.data.error);
         } else {
           navigate("/");
-          window.location.reload();
         }
       } catch (error) {
         toast.error(error);
@@ -115,4 +114,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default LoginPage;

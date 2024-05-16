@@ -1,63 +1,61 @@
 import { apiSlice } from "./apiSlice";
-import { setTodos, removeTodo, addTodo, updateTodo } from "../todoSlice";
-import { logOut } from "../authSlice";
+import { setTasks, addTask, removeTask, updateTask } from "../taskSlice";
 
-export const authApiSlice = apiSlice.injectEndpoints({
+export const taskApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getTodos: builder.query({
-      query: () => ({
-        url: "/todos",
+    getTasks: builder.query({
+      query: (todoId) => ({
+        url: `/tasks?todoId=${todoId}`,
         method: "GET",
       }),
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const response = await queryFulfilled;
-          dispatch(setTodos(response.data.todos));
+          dispatch(setTasks(response.data.tasks));
         } catch (err) {
           console.error(err);
-          dispatch(logOut());
         }
       },
     }),
-    createTodo: builder.mutation({
-      query: (title) => ({
-        url: "/todos",
+    createTask: builder.mutation({
+      query: ({ body, todoId, completed }) => ({
+        url: "/tasks",
         method: "POST",
-        body: { title },
+        body: { body, completed, todoId },
       }),
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const response = await queryFulfilled;
-          dispatch(addTodo(response.data.todo));
+          dispatch(addTask(response.data.task));
         } catch (err) {
           console.error(err);
         }
       },
     }),
-    deleteTodo: builder.mutation({
-      query: (todoId) => ({
-        url: `/todos/${todoId}`,
+    deleteTask: builder.mutation({
+      query: (taskId) => ({
+        url: `/tasks/${taskId}`,
         method: "DELETE",
       }),
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
-          dispatch(removeTodo(arg));
+          dispatch(removeTask(arg));
         } catch (err) {
           console.error(err);
         }
       },
     }),
-    updateTodo: builder.mutation({
-      query: ({ todoId, title }) => ({
-        url: `/todos/${todoId}`,
+    updateTask: builder.mutation({
+      query: ({taskId, updatedTask}) => ({
+        url: `/tasks/${taskId}`,
         method: "PUT",
-        body: { title },
+        body: updatedTask,
       }),
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const response = await queryFulfilled;
-          dispatch(updateTodo(response.data.todo));
+          dispatch(updateTask(response.data.task));
         } catch (err) {
           console.error(err);
         }
@@ -67,8 +65,8 @@ export const authApiSlice = apiSlice.injectEndpoints({
 });
 
 export const {
-  useGetTodosQuery,
-  useCreateTodoMutation,
-  useDeleteTodoMutation,
-  useUpdateTodoMutation,
-} = authApiSlice;
+  useGetTasksQuery,
+  useCreateTaskMutation,
+  useDeleteTaskMutation,
+  useUpdateTaskMutation,
+} = taskApiSlice;

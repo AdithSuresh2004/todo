@@ -1,34 +1,22 @@
 import { Modal } from "antd";
-import React, { useEffect } from "react";
+import React from "react";
 import { toast } from "react-toastify";
-import { useDeleteTodoMutation } from "../store/slices/api/todoApiSlice";
+import useEnterKeyPress from "../../../hooks/useEnterKeyPress";
 
-const DeleteTodoModal = ({ open, handleCancel, todoId }) => {
-  const [deleteTodo] = useDeleteTodoMutation();
+const DeleteTodoModal = ({ open, handleCancel, todoId, onDeleteSuccess, deleteTodo }) => {
 
   const handleDeleteTodo = async () => {
+    if (!open) return;
     try {
       await deleteTodo(todoId);
-      window.location.reload();
       handleCancel();
+      onDeleteSuccess();
     } catch (error) {
       toast.error("Failed to delete todo. Please try again.");
     }
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Enter") {
-        handleDeleteTodo();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  });
+  useEnterKeyPress(handleDeleteTodo);
 
   return (
     <Modal
