@@ -4,7 +4,7 @@ const verifyToken = (req, res, next) => {
   const token = req.headers["authorization"] || req.query.token || req.cookies.token;
 
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({ message: "Token not set yet" });
   }
 
   jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, decoded) => {
