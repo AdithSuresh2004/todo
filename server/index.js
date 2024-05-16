@@ -7,6 +7,8 @@ const guestUser = require("./middleware/guestUser");
 
 const userRoutes = require("./routes/userRoutes");
 const todoRoutes = require("./routes/todoRoutes");
+const taskRoutes = require("./routes/taskRoutes");
+
 const corsOptions = require("./configs/corsOptions");
 
 const app = express();
@@ -22,6 +24,7 @@ app.use(verifyToken);
 //Routes
 app.use("/", userRoutes);
 app.use("/", todoRoutes);
+app.use("/", taskRoutes);
 
 app.listen(PORT, () => {
   console.log(`App is running on ${PORT}`);

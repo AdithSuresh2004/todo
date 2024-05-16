@@ -1,12 +1,13 @@
 import "react-toastify/dist/ReactToastify.css";
 import { Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
 import Header from "./components/Header";
-import Todo from "./pages/Todo";
-import NotFound from "./pages/NotFound";
+import TodoPage from "./pages/TodoPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import NotFoundpage from "./pages/NotFoundPage";
+import TaskPage from "./pages/TaskPage";
+
 
 const App = () => {
   return (
@@ -14,11 +15,11 @@ const App = () => {
       <ToastContainer />
       <Header />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/:id" element={<Todo />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/notfound" element={<NotFound />} />
+        <Route path="/" element={<TodoPage />} />
+        <Route path="todos/:todoId" element={<TaskPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="*" element={<NotFoundpage />} />
       </Routes>
     </div>
   );

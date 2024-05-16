@@ -12,32 +12,37 @@ const findUserByUsername = async (username) => {
 };
 
 const findTodosById = async (id) => {
-  return await prisma.todo.findMany({ where: { ownerId: id } });
+  return await prisma.todo.findMany({
+    where: { ownerId: id },
+  });
 };
 
-const updateTodosOwnerId = async (todos, newId) => {
+const updateTodosOwnerId = async (todos, newOwnerId) => {
   await prisma.todo.updateMany({
-    where: {
-      id: { in: todos.map((todo) => todo.id) },
-    },
-    data: { ownerId: newId },
+    where: { id: { in: todos.map((todo) => todo.id) } },
+    data: { ownerId: newOwnerId },
   });
 };
 
 const register = async (req, res) => {
   const { username, password } = req.body;
+  const validationError = validateUserInput({ username, password });
 
-  const inputError = validateUserInput(username, password);
-  if (inputError) {
-    return sendErrorResponse(res, HTTP_STATUS_CODES.BAD_REQUEST, inputError);
+  if (validationError) {
+    return sendErrorResponse(
+      res,
+      HTTP_STATUS_CODES.BAD_REQUEST,
+      validationError
+    );
   }
 
-  const existingUserByUsername = await findUserByUsername(username);
-  if (existingUserByUsername) {
+  const existingUser = await findUserByUsername(username);
+
+  if (existingUser) {
     return sendErrorResponse(
       res,
       HTTP_STATUS_CODES.CONFLICT,
-      "Username is already used."
+      "Username is already in use."
     );
   }
 
@@ -47,9 +52,9 @@ const register = async (req, res) => {
       data: { username, password: hashedPassword },
     });
 
-    res.status(HTTP_STATUS_CODES.OK).send(newUser);
+    res.status(HTTP_STATUS_CODES.CREATED).json({ user: newUser });
   } catch (error) {
-    console.error(error);
+    console.error("Error registering user:", error);
     sendErrorResponse(
       res,
       HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
@@ -60,46 +65,54 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   const { username, password } = req.body;
-  const { userId } = req.user;
+  const { userId } = req.user || {};
+  const validationError = validateUserInput({ username, password });
 
-  const inputError = validateUserInput(username, password);
-  if (inputError) {
-    return sendErrorResponse(res, HTTP_STATUS_CODES.BAD_REQUEST, inputError);
+  if (validationError) {
+    return sendErrorResponse(
+      res,
+      HTTP_STATUS_CODES.BAD_REQUEST,
+      validationError
+    );
   }
 
   try {
     const user = await findUserByUsername(username);
+
     if (!user) {
       return sendErrorResponse(
         res,
         HTTP_STATUS_CODES.UNAUTHORIZED,
-        "Incorrect username."
+        "Invalid credentials."
       );
     }
 
-    const validPassword = bcrypt.compare(password, user.password);
-    if (!validPassword) {
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if (!isValidPassword) {
       return sendErrorResponse(
         res,
         HTTP_STATUS_CODES.UNAUTHORIZED,
-        "Incorrect password."
+        "Invalid credentials."
       );
     }
 
-    const guestTodos = await findTodosById(userId);
-
-    if (guestTodos.length > 0) {
-      await updateTodosOwnerId(guestTodos, user.id);
+    if (userId) {
+      const guestTodos = await findTodosById(userId);
+      if (guestTodos.length > 0) {
+        await updateTodosOwnerId(guestTodos, user.id);
+      }
     }
 
-    const token = generateToken(user.username, user.id);
-
-    return res
-      .cookie("token", token, { httpOnly: true, secure: true })
+    const token = generateToken(user.username, user.id, user.isGuest);
+    const expiryDate = new Date();
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+    res
+      .cookie("token", token, { expires: expiryDate, sameSite: "strict" })
       .status(HTTP_STATUS_CODES.OK)
-      .json({ message: "Logged in." });
+      .json({ message: "Logged in successfully." });
   } catch (error) {
-    console.error(error);
+    console.error("Error authenticating user:", error);
     sendErrorResponse(
       res,
       HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
@@ -110,8 +123,9 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   res.clearCookie("token");
-
-  res.status(HTTP_STATUS_CODES.OK).send({ message: "Logged out successfully" });
+  res
+    .status(HTTP_STATUS_CODES.OK)
+    .json({ message: "Logged out successfully." });
 };
 
 module.exports = { register, login, logout };

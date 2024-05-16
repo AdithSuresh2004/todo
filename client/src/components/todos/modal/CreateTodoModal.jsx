@@ -1,37 +1,36 @@
 import { Modal } from "antd";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
-import { useCreateTodoMutation } from "../store/slices/api/todoApiSlice";
+import useEnterKeyPress from "../../../hooks/useEnterKeyPress";
 
-const CreateTodoModal = ({ open, handleCancel }) => {
+const CreateTodoModal = ({
+  createTodo,
+  open,
+  handleCancel,
+  onCreateSuccess,
+}) => {
   const [title, setTitle] = useState("");
-  const [createTodo] = useCreateTodoMutation();
 
   const handleCreateTodo = async () => {
+    if (!open) return;
+    
     if (title.trim() === "") {
       toast.error("Please enter a title.");
       return;
     }
 
-    await createTodo(title);
-    window.location.reload();
-    setTitle("");
-    handleCancel();
+
+    try {
+      await createTodo(title);
+      setTitle("");
+      handleCancel();
+      onCreateSuccess();
+    } catch (error) {
+      toast.error("Failed to create todo. Please try again.");
+    }
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Enter") {
-        handleCreateTodo(e);
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  });
+  useEnterKeyPress(handleCreateTodo);
 
   return (
     <Modal

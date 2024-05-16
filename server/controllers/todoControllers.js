@@ -1,7 +1,6 @@
 const prisma = require("../lib/db");
 const HTTP_STATUS_CODES = require("../configs/httpStatusCode");
 const sendErrorResponse = require("../lib/sendErrorResponse");
-const validateUserInput = require("../lib/validateUserInput");
 
 const getTodos = async (req, res) => {
   try {
@@ -21,14 +20,6 @@ const getTodos = async (req, res) => {
       },
     });
 
-    if (!todos || todos.length === 0) {
-      return sendErrorResponse(
-        res,
-        HTTP_STATUS_CODES.NOT_FOUND,
-        "Todo not found"
-      );
-    }
-
     return res.status(HTTP_STATUS_CODES.OK).json({ todos });
   } catch (error) {
     console.error("Error retrieving todos:", error);
@@ -45,25 +36,14 @@ const createTodo = async (req, res) => {
     const { title } = req.body;
     const { userId } = req.user;
 
-    const validationError = validateUserInput(title, userId);
-    if (validationError) {
-      return sendErrorResponse(
-        res,
-        HTTP_STATUS_CODES.BAD_REQUEST,
-        validationError
-      );
-    }
-
-    await prisma.todo.create({
+    const newTodo = await prisma.todo.create({
       data: {
         ownerId: userId,
         title,
       },
     });
 
-    return res
-      .status(HTTP_STATUS_CODES.OK)
-      .json({ message: "Todo list created successfully." });
+    return res.status(HTTP_STATUS_CODES.CREATED).json({ todo: newTodo });
   } catch (error) {
     console.error("Error creating todo:", error);
     return sendErrorResponse(
@@ -75,13 +55,19 @@ const createTodo = async (req, res) => {
 };
 
 const deleteTodo = async (req, res) => {
-  const { todoId } = req.body;
+  const { todoId } = req.params;
   const { userId } = req.user;
-  const id = todoId;
+
+  if (!todoId)
+    return sendErrorResponse(
+      res,
+      HTTP_STATUS_CODES.BAD_REQUEST,
+      "Todo ID is required."
+    );
 
   try {
     const todo = await prisma.todo.findUnique({
-      where: { id },
+      where: { id: todoId },
       select: { ownerId: true },
     });
 
@@ -101,7 +87,7 @@ const deleteTodo = async (req, res) => {
       );
     }
 
-    await prisma.todo.delete({ where: { id } });
+    await prisma.todo.delete({ where: { id: todoId } });
 
     return res
       .status(HTTP_STATUS_CODES.OK)
@@ -116,58 +102,14 @@ const deleteTodo = async (req, res) => {
   }
 };
 
-const addToTodo = async (req, res) => {
-  const { task, status } = req.body;
-  const { userId } = req.user;
-
-  if (!task || !status) {
-    return sendErrorResponse(
-      res,
-      HTTP_STATUS_CODES.BAD_REQUEST,
-      "No data provided"
-    );
-  }
-
-  try {
-    const user = await findUserByUsername(userId);
-
-    if (!user) {
-      return sendErrorResponse(
-        res,
-        HTTP_STATUS_CODES.NOT_FOUND,
-        "User not found."
-      );
-    }
-
-    await prisma.task.create({
-      data: {
-        completed: status,
-        body: task,
-        Todo: { connect: { id: user.todos[0].id } },
-      },
-    });
-
-    return res
-      .status(HTTP_STATUS_CODES.OK)
-      .json({ message: "Todo added successfully." });
-  } catch (error) {
-    console.error("Error adding todo:", error);
-    return sendErrorResponse(
-      res,
-      HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-      "Internal server error."
-    );
-  }
-};
-
-const updateStatus = async (req, res) => {
-  const { id } = req.params;
-  const { completed } = req.body;
+const updateTodo = async (req, res) => {
+  const { todoId } = req.params;
+  const { title } = req.body;
   const { userId } = req.user;
 
   try {
     const todo = await prisma.todo.findUnique({
-      where: { id },
+      where: { id: todoId },
       select: { ownerId: true },
     });
 
@@ -188,16 +130,17 @@ const updateStatus = async (req, res) => {
     }
 
     const updatedTodo = await prisma.todo.update({
-      where: { id },
-      data: { completed },
+      where: { id: todoId },
+      data: { title },
     });
 
     return res.status(HTTP_STATUS_CODES.OK).json({
-      message: "Todo status updated successfully.",
+      message: "Todo updated successfully.",
       todo: updatedTodo,
     });
+    
   } catch (error) {
-    console.error("Error updating todo status:", error);
+    console.error("Error updating todo:", error);
     return sendErrorResponse(
       res,
       HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
@@ -206,4 +149,4 @@ const updateStatus = async (req, res) => {
   }
 };
 
-module.exports = { getTodos, createTodo, addToTodo, deleteTodo, updateStatus };
+module.exports = { getTodos, createTodo, deleteTodo, updateTodo };

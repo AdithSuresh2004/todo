@@ -1,10 +1,10 @@
-const validateUserInput = (username, password) => {
-  if (!username || !username.trim()) {
-    return "Username is required";
+const validateUserInput = (input) => {
+  if (input.username && typeof input.username !== 'string') {
+    return 'Username must be a string';
   }
 
-  if (!password || !password.trim()) {
-    return "Password is required";
+  if (input.password && typeof input.password !== 'string') {
+    return 'Password must be a string';
   }
 
   return null;

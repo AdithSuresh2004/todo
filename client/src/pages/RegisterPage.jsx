@@ -7,7 +7,7 @@ import { useRegisterMutation } from "../store/slices/api/authApiSlice";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated } from "../store/slices/authSlice";
 
-const Register = () => {
+const RegisterPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -154,4 +154,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default RegisterPage;

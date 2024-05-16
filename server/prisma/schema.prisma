@@ -14,10 +14,11 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(nanoid(6))
-  username String @unique
-  password String?
-  todos    Todo[]
+  id        String  @id @default(nanoid(6))
+  username  String  @unique
+  password  String?
+  isGuest   Boolean @default(false)
+  todos     Todo[]
 }
 
 model Todo {
@@ -32,6 +33,7 @@ model Task {
   id        String  @id @default(nanoid(6))
   body      String
   completed Boolean @default(false)
+  createdAt DateTime @default(now())
   Todo      Todo?   @relation(fields: [todoId], references: [id])
   todoId    String?
 }
